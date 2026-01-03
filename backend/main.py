@@ -40,7 +40,7 @@ engine = create_engine(
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
-# use pbkdf2_sha256 to avoid bcrypt issues
+
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 app = FastAPI()
@@ -141,13 +141,13 @@ def generate_bot_reply(messages: list["Message"]) -> str:
     Call OpenAI to generate a reply based on the full message history
     in this session.
     """
-    # Convert your Message objects into the format the API expects
+    # Format Message objects for the API
     history = []
     for m in messages:
         role = "user" if m.sender == "user" else "assistant"
         history.append({"role": role, "content": m.content})
 
-    # If somehow there are no messages, give a default prompt
+    # If there are no messages
     if not history:
         history = [{"role": "user", "content": "Say hello to me."}]
 
@@ -155,11 +155,10 @@ def generate_bot_reply(messages: list["Message"]) -> str:
         resp = openai_client.responses.create(
             model=OPENAI_MODEL,
             input=history,
-            store=False,  # don't persist conversation state on OpenAI's side
+            store=False,
         )
-        return resp.output_text  # unified text helper from the Responses API
+        return resp.output_text  
     except Exception as e:
-        # Log the error on the server and fall back to something safe
         print("OpenAI error:", e)
         return "Sorry, I had a problem talking to the AI service. Please try again."
 
